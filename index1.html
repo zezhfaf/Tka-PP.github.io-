@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CBT ANBK - Simulasi TKA Pendidikan Pancasila SMKN 1 Grati</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .anbk-grid-active { border: 2px solid #2563eb !important; font-weight: bold; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; rounded: 3px; }
+    </style>
+</head>
+<body class="bg-[#edf2f7] text-slate-800 antialiased min-h-screen flex flex-col select-none">
+
+    <div id="login-container" class="fixed inset-0 bg-gradient-to-br from-blue-900 to-slate-900 z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 border border-slate-200">
+            <div class="text-center space-y-2 mb-6">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto text-blue-700 text-2xl shadow-inner">
+                    <i class="fa-solid fa-school-flag"></i>
+                </div>
+                <h2 class="text-xl font-bold text-slate-800">CBT ASESMEN SMKN 1 GRATI</h2>
+                <p class="text-xs text-slate-500 font-medium">Ujian Simulasi TKA Pendidikan Pancasila - Kelas XII</p>
+            </div>
+            
+            <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Nama Lengkap Peserta</label>
+                    <input type="text" id="student-name" required autocomplete="off" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-600 text-sm" placeholder="Masukkan nama lengkap Anda...">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Kompetensi Keahlian (Jurusan)</label>
+                    <select id="student-major" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-600 text-sm bg-white">
+                        <option value="" disabled selected>-- Pilih Jurusan --</option>
+                        <option value="Kimia Industri">Kimia Industri</option>
+                        <option value="Teknik Pemesinan">Teknik Pemesinan</option>
+                        <option value="Teknik Pengecoran Logam">Teknik Pengecoran Logam</option>
+                        <option value="Teknik Audio Video">Teknik Audio Video</option>
+                        <option value="Teknik Multimedia">Teknik Multimedia</option>
+                        <option value="Akuntansi">Akuntansi</option>
+                        <option value="Agribisnis Ternak Unggas">Agribisnis Ternak Unggas</option>
+                        <option value="Agribisnis Perikanan">Agribisnis Perikanan</option>
+                    </select>
+                </div>
+                <div class="bg-amber-50 border-l-4 border-amber-500 p-3 rounded-r-lg text-xs text-amber-900 leading-relaxed">
+                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> <strong>PENTING:</strong> Sistem dilengkapi deteksi anti-kecurangan otomatis. Meninggalkan tab ujian atau membuka aplikasi lain akan langsung dihitung sebagai pelanggaran!
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-sm shadow transition duration-150 flex items-center justify-center space-x-2">
+                    <span>Mulai Masuk Tes</span> <i class="fa-solid fa-right-to-bracket"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="main-cbt-layout" class="hidden flex flex-col min-h-screen">
+        <header class="bg-white border-b border-slate-300 shadow-sm sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-blue-600 text-white p-2 rounded-lg font-black tracking-tighter text-sm shadow-sm">
+                        CBT
+                    </div>
+                    <div>
+                        <h1 class="text-sm md:text-base font-bold text-slate-800 tracking-tight">KEMDIKBUDRISTEK / ASESMEN SMK</h1>
+                        <p class="text-[11px] text-slate-500 font-medium">Peserta: <span id="user-display" class="text-blue-700 font-bold">-</span> | <span id="major-display" class="font-semibold">-</span></p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4 mt-2 md:mt-0">
+                    <div class="bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-300 flex items-center space-x-2">
+                        <i class="fa-regular fa-clock text-blue-600 font-bold"></i>
+                        <span id="timer" class="font-mono font-bold text-base text-slate-700">120:00</span>
+                    </div>
+                    <div class="text-xs font-semibold text-slate-600 hidden md:block">
+                        Sisa Waktu Ujian
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="bg-gradient-to-r from-slate-800 to-slate-700 text-white text-xs px-4 py-2 shadow-inner">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <div><i class="fa-solid fa-book-bookmark text-amber-400 mr-1"></i> MATAPELAJARAN: PENDIDIKAN PANCASILA (HOTS)</div>
+                <div class="font-mono">STATUS: TES SEDANG BERLANGSUNG</div>
+            </div>
+        </div>
+
+        <main class="max-w-7xl mx-auto px-4 py-4 flex-grow grid grid-cols-1 lg:grid-cols-4 gap-4 w-full">
+            
+            <aside class="lg:col-span-1 bg-white p-4 rounded-lg shadow-sm border border-slate-300 order-2 lg:order-1 h-fit">
+                <h3 class="font-bold text-xs text-slate-700 mb-3 uppercase tracking-wider flex items-center justify-between">
+                    <span><i class="fa-solid fa-th-large text-blue-600 mr-1.5"></i>Nomor Soal</span>
+                    <span class="text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-500 font-mono"><span id="progress-text">0</span>/<span class="total-questions">120</span></span>
+                </h3>
+                
+                <div class="grid grid-cols-3 gap-1 text-[10px] mb-4 p-2 bg-slate-50 rounded border border-slate-200">
+                    <div class="flex items-center space-x-1"><span class="w-3 h-3 bg-white border border-slate-400 rounded-sm inline-block"></span><span>Belum</span></div>
+                    <div class="flex items-center space-x-1"><span class="w-3 h-3 bg-blue-600 rounded-sm inline-block"></span><span>Dijawab</span></div>
+                    <div class="flex items-center space-x-1"><span class="w-3 h-3 bg-amber-500 rounded-sm inline-block"></span><span>Ragu</span></div>
+                </div>
+
+                <div id="number-grid" class="grid grid-cols-5 gap-1.5 max-h-[260px] overflow-y-auto p-1 custom-scrollbar border border-slate-200 rounded">
+                </div>
+
+                <button id="btn-submit-exam" onclick="finishExam()" class="mt-4 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded text-xs shadow transition duration-150 flex items-center justify-center space-x-2 cursor-pointer">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <span>Selesaikan Ujian</span>
+                </button>
+            </aside>
+
+            <section class="lg:col-span-3 flex flex-col space-y-4 order-1 lg:order-2">
+                <div id="quiz-card" class="bg-white rounded-lg shadow-sm border border-slate-300 overflow-hidden">
+                    <div class="bg-slate-50 px-4 py-2 border-b border-slate-300 flex justify-between items-center text-xs">
+                        <span id="stimulus-badge" class="bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded uppercase tracking-wide text-[10px]">
+                            Studi Kasus
+                        </span>
+                        <span class="font-semibold text-slate-600">
+                            SOAL NOMOR: <span id="current-question-num" class="text-blue-700 text-sm font-bold">1</span>
+                        </span>
+                    </div>
+
+                    <div class="p-5 space-y-4">
+                        <div id="stimulus-container" class="bg-slate-50 border border-slate-200 p-4 rounded text-slate-700 text-xs md:text-sm leading-relaxed max-h-[220px] overflow-y-auto custom-scrollbar">
+                        </div>
+
+                        <div class="text-sm md:text-base font-semibold text-slate-800 leading-relaxed" id="question-text">
+                        </div>
+
+                        <div class="space-y-2.5 pt-2" id="options-container">
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 px-4 py-3 border-t border-slate-300 flex justify-between items-center text-xs">
+                        <button id="btn-prev" onclick="prevQuestion()" class="bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium py-1.5 px-4 rounded shadow-sm flex items-center space-x-1.5 transition disabled:opacity-40 cursor-pointer">
+                            <i class="fa-solid fa-chevron-left text-[10px]"></i> <span>Soal Sebelumnya</span>
+                        </button>
+                        
+                        <button id="btn-doubtful" onclick="toggleDoubtful()" class="bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold py-1.5 px-4 rounded shadow-sm flex items-center space-x-1.5 transition cursor-pointer">
+                            <input type="checkbox" id="chk-doubt" class="pointer-events-none"> <span>Ragu-Ragu</span>
+                        </button>
+
+                        <button id="btn-next" onclick="nextQuestion()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-4 rounded shadow-sm flex items-center space-x-1.5 transition cursor-pointer">
+                            <span>Soal Berikutnya</span> <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="explanation-box" class="hidden bg-emerald-50 border border-emerald-400 rounded-lg p-4 shadow-inner">
+                    <h4 class="text-emerald-900 font-bold text-sm mb-1.5 flex items-center">
+                        <i class="fa-solid fa-circle-info text-emerald-600 mr-2"></i> Analisis Solusi & Kunci Evaluasi
+                    </h4>
+                    <div id="explanation-content" class="text-slate-700 text-xs md:text-sm leading-relaxed"></div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="bg-slate-200 text-slate-500 text-center py-2.5 text-[10px] mt-auto border-t border-slate-300">
+            &copy; 2026 Pusat Asesmen Komputerisasi Pendidikan - SMKN 1 Grati.
+        </footer>
+    </div>
+
+    <div id="result-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200] hidden flex items-center justify-center p-4">
+        <div id="pdf-report-area" class="bg-white rounded-xl max-w-2xl w-full p-6 shadow-2xl border border-slate-300 transform transition-all">
+            <div class="text-center space-y-3">
+                <div class="border-b-2 border-slate-800 pb-3 text-left flex justify-between items-center">
+                    <div>
+                        <h2 class="text-md font-bold text-slate-900 tracking-tight">BERITA ACARA HASIL CBT ASESMEN</h2>
+                        <p class="text-[10px] text-slate-500 uppercase">SMK NEGERI 1 GRATI - PASURUAN</p>
+                    </div>
+                    <i class="fa-solid fa-square-poll-vertical text-3xl text-slate-700"></i>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-left text-xs grid grid-cols-2 gap-2 my-2 shadow-inner">
+                    <div><span class="text-slate-500">Nama Peserta:</span> <strong id="pdf-nama" class="text-slate-800 block">-</strong></div>
+                    <div><span class="text-slate-500">Kompetensi Keahlian:</span> <strong id="pdf-jurusan" class="text-slate-800 block">-</strong></div>
+                    <div><span class="text-slate-500">Mata Pelajaran:</span> <span class="block font-medium">Pendidikan Pancasila XII</span></div>
+                    <div><span class="text-slate-500">Pelanggaran (Pindah Tab):</span> <strong id="pdf-fraud" class="text-red-600 block">0 Kali</strong></div>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-2 my-4">
+                    <div class="bg-emerald-50 p-2.5 rounded border border-emerald-200 text-center shadow-sm">
+                        <div class="text-[10px] text-emerald-800 font-bold uppercase">Benar</div>
+                        <div id="modal-correct" class="text-2xl font-black text-emerald-600">0</div>
+                    </div>
+                    <div class="bg-red-50 p-2.5 rounded border border-red-200 text-center shadow-sm">
+                        <div class="text-[10px] text-red-800 font-bold uppercase">Salah/Kosong</div>
+                        <div id="modal-wrong" class="text-2xl font-black text-red-600">0</div>
+                    </div>
+                    <div class="bg-blue-50 p-2.5 rounded border border-blue-200 text-center shadow-sm">
+                        <div class="text-[10px] text-blue-800 font-bold uppercase">Skor Akhir</div>
+                        <div id="modal-score" class="text-2xl font-black text-blue-600">0</div>
+                    </div>
+                </div>
+
+                <div class="text-xs text-left bg-blue-50/50 p-3 rounded border border-blue-200 leading-relaxed" id="performance-feedback">
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-2 pt-3 border-t border-slate-200" id="action-buttons-container">
+                    <button onclick="downloadPDFReport()" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold py-2 px-4 rounded text-xs shadow transition flex items-center justify-center space-x-2 cursor-pointer">
+                        <i class="fa-solid fa-file-pdf"></i> <span>Unduh Lembar Hasil (PDF)</span>
+                    </button>
+                    <button onclick="reviewExam()" class="flex-1 bg-slate-700 hover:bg-slate-800 text-white font-bold py-2 px-4 rounded text-xs shadow transition flex items-center justify-center space-x-2 cursor-pointer">
+                        <i class="fa-solid fa-magnifying-glass"></i> <span>Tinjau Ulang Pembahasan</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GOOGLE_SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbz_XXXXXXXXXXXX/exec"; 
+
+        // ====== DATABASE INDUK SOAL ASLI (1-10) ======
+        const rawDatabase = [
+            {
+                id: 1,
+                stimulusType: "Kasus Ekonomi Digital & Hukum",
+                stimulus: `<strong>KASUS: Dilema Regulasi Transaksi Digital Global</strong><br>Di era transformasi industri 4.0, sekelompok lulusan SMK jurusan Pengembangan Perangkat Lunak dan Gim (PPLG) mendirikan platform dagang-el (e-commerce) berbasis koperasi digital untuk mendistribusikan produk kreatif UMKM lokal. Namun, dalam perkembangannya, mereka terbentur dengan regulasi investasi asing dan monopoli pasar oleh korporasi multinasional yang memanfaatkan celah hukum perpajakan luar negeri. Fenomena ini menciptakan kesenjangan pendapatan yang tajam di kalangan pelaku usaha lokal terpencil.`,
+                question: "Jika dianalisis berdasarkan prinsip keadilan sosial dalam sila kelima Pancasila dan dikaitkan dengan pasal 33 UUD NRI Tahun 1945, langkah strategis konstitusional apa yang seharusnya diambil oleh pemerintah untuk melindungi ekosistem digital UMKM lokal tersebut?",
+                options: [
+                    { key: "A", text: "Menutup total akses seluruh platform pasar digital asing guna memproteksi pasar dalam negeri demi kedaulatan." },
+                    { key: "B", text: "Memberikan kebebasan mutlak bagi korporasi multinasional untuk memonopoli pasar dengan asas perdagangan bebas internasional." },
+                    { key: "C", text: "Menyusun regulasi perpajakan yang adil, melakukan intervensi pasar digital secara proporsional melalui insentif hukum, serta memperkuat pembiayaan koperasi digital berbasis kerakyatan." },
+                    { key: "D", text: "Membubarkan koperasi digital bentukan lulusan SMK tersebut karena dinilai belum siap menghadapi persaingan global." },
+                    { key: "E", text: "Menyerahkan seluruh mekanisme penyelesaian masalah pada hukum pasar bebas (Tangan Tak Terlihat / Invisible Hand) tanpa campur tangan negara." }
+                ],
+                answer: "C",
+                explanation: "Sila kelima Pancasila mendasari Pasal 33 UUD NRI 1945 yang menekankan bahwa perekonomian disusun sebagai usaha bersama berdasar atas asas kekeluargaan. Intervensi negara berupa regulasi pajak yang adil terhadap korporasi asing serta pemberian insentif bagi koperasi digital lokal merupakan wujud perlindungan ekonomi kerakyatan dari ancaman kapitalisme global."
+            },
+            {
+                id: 2,
+                stimulusType: "Tabel Data & Statistik Kebijakan",
+                stimulus: `<strong>TABEL: Data Pelanggaran Etika dan Hukum di Lingkungan Industri (Tahun 2024-2025)</strong><br><div class="overflow-x-auto mt-1"><table class="w-full text-[11px] text-left border-collapse border border-slate-300 bg-white"><thead><tr class="bg-slate-200"><th class="border border-slate-300 p-1.5">Jenis Pelanggaran</th><th class="border border-slate-300 p-1.5">Persentase</th><th class="border border-slate-300 p-1.5">Dampak Sosial</th></tr></thead><tbody><tr><td class="border border-slate-300 p-1.5">Diskriminasi Upah Pekerja Lokal vs Asing</td><td class="border border-slate-300 p-1.5">42%</td><td class="border border-slate-300 p-1.5">Konflik horizontal antar-buruh</td></tr><tr><td class="border border-slate-300 p-1.5">Pembuangan Limbah Kimia Tanpa Amdal</td><td class="border border-slate-300 p-1.5">35%</td><td class="border border-slate-300 p-1.5">Kerusakan kesehatan warga sekitar pabrik</td></tr><tr><td class="border border-slate-300 p-1.5">Intoleransi Waktu Ibadah Pekerja</td><td class="border border-slate-300 p-1.5">23%</td><td class="border border-slate-300 p-1.5">Penurunan keharmonisan internal perusahaan</td></tr></tbody></table></div>`,
+                question: "Berdasarkan data tabel di atas, pelanggaran yang menempati persentase tertinggi (42%) jika ditinjau dari perspektif nilai kemানুsiaan yang adil dan beradab (Sila ke-2) mengandung kelemahan fundamental dalam pemenuhan hak asasi manusia berupa...",
+                options: [
+                    { key: "A", text: "Pelanggaran hak kebebasan berserikat bagi seluruh buruh industri manufaktur." },
+                    { key: "B", text: "Pengabaian terhadap harkat dan martabat manusia melalui perlakuan diskriminatif atas hak ekonomi yang setara." },
+                    { key: "C", text: "Ketidakmampuan perusahaan dalam mengadopsi teknologi hijau berwawasan lingkungan hidup." },
+                    { key: "D", text: "Pelanggaran hak mutlak mutasi jabatan bagi karyawan senior." },
+                    { key: "E", text: "Intervensi nilai religiusitas buruh oleh serikat pekerja eksternal." }
+                ],
+                answer: "B",
+                explanation: "Diskriminasi upah berdasarkan asal-usul (Lokal vs Asing) untuk beban kerja yang setara melanggar Sila Ke-2 (Kemanusiaan yang Adil dan Beradab). Sila ini menjamin pengakuan atas harkat, martabat, serta hak-hak yang sama tanpa diskriminasi rasial atau kewarganegaraan di wilayah hukum Indonesia."
+            },
+            {
+                id: 3,
+                stimulusType: "Wacana Dinamika Global",
+                stimulus: `<strong>WACANA: Benturan Budaya dan Hoaks Media Sosial</strong><br>Di sebuah kawasan industri besar, beredar pesan berantai (hoaks) di media sosial yang menuduh kelompok pekerja dari suku tertentu melakukan sabotase mesin produksi. Isu ini dengan cepat memicu ketegangan dan aksi mogok massal yang mengancam stabilitas operasional pabrik nasional. Setelah diinvestigasi oleh pihak kepolisian, pesan tersebut sengaja disebarkan oleh akun palsu yang terafiliasi dengan jaringan kompetitor bisnis luar negeri untuk menjatuhkan nilai saham perusahaan.`,
+                question: "Konflik horizontal tersebut merefleksikan rapuhnya pemahaman terhadap Sila Ketiga Pancasila. Strategi preventif paling mendasar apa yang harus diinternalisasikan pada institusi pendidikan vokasi (SMK) untuk mencegah terulangnya kejadian serupa di dunia kerja?",
+                options: [
+                    { key: "A", text: "Melarang total penggunaan ponsel pintar dan media sosial di seluruh area lingkungan sekolah." },
+                    { key: "B", text: "Meningkatkan kemampuan keterampilan teknis (hard skills) bidang permesinan agar siswa tidak peduli pada isu sosial." },
+                    { key: "C", text: "Mengintegrasikan literasi digital kritis berbasis etika Pancasila dan wawasan kebangsaan guna menyaring infiltrasi informasi pemecah belah." },
+                    { key: "D", text: "Mendirikan posko keamanan militer di setiap sekolah untuk memantau aktivitas siber siswa." },
+                    { key: "E", text: "Menyerahkan penyelesaian konflik sepenuhnya kepada mekanisme internal manajemen perusahaan kelak." }
+                ],
+                answer: "C",
+                explanation: "Solusi fundamental jangka panjang (preventif) untuk membentengi persatuan bangsa (Sila ke-3) dari serangan disinformasi siber adalah integrasi literasi digital kritis berbasis Pancasila. Hal ini membentuk kemampuan nalar kritis siswa SMK dalam menyaring hoaks yang berniat memecah belah keutuhan nasional."
+            },
+            {
+                id: 4,
+                stimulusType: "Kasus Demokrasi Terbuka",
+                stimulus: `<strong>KASUS: Pengambilan Keputusan Tata Ruang Wilayah Vokasi</strong><br>Pemerintah Daerah berencana membangun kawasan industri baru yang terintegrasi dengan SMK Pusat Keunggulan. Namun, proyek ini mengorbankan lahan pertanian subur milik warga adat lokal. Dalam rapat musyawarah tingkat desa, mayoritas warga menolak, tetapi oknum panitia pembangunan memalsukan tanda tangan persetujuan warga dengan alasan 'Demi Kepentingan Pembangunan Nasional yang Cepat'.`,
+                question: "Tindakan pemalsuan persetujuan atas nama pembangunan tersebut bertentangan dengan esensi Sila Ke-4 Pancasila. Mengapa pemaksaan kehendak tersebut dianggap menciderai demokrasi Pancasila?",
+                options: [
+                    { key: "A", text: "Karena pembangunan infrastruktur fisik tidak membawa keuntungan materi sama sekali bagi kas negara." },
+                    { key: "B", text: "Karena demokrasi Pancasila menuntut kedaulatan rakyat dan musyawarah jujur tanpa intimidasi, di mana tujuan pembangunan tidak boleh menghalalkan cara yang melanggar hak hukum warga." },
+                    { key: "C", text: "Karena masyarakat adat tidak memiliki kedudukan hukum tertulis dalam sistem konstitusi modern Indonesia." },
+                    { key: "D", text: "Karena keputusan mutlak dalam sistem pemerintahan daerah berada di tangan Gubernur tanpa memerlukan proses musyawarah bawah." },
+                    { key: "E", text: "Karena lahan pertanian dinilai lebih menghasilkan devisa dibandingkan proyek industri manufaktur otomotif." }
+                ],
+                answer: "B",
+                explanation: "Sila Ke-4 menegaskan kerakyatan yang dipimpin oleh hikmat kebijaksanaan dalam permusyawaratan/perwakilan. Prinsip utama demokrasi Pancasila adalah kejujuran proses mufakat tanpa pemaksaan kehendak. Kepentingan umum/nasional yang sah tidak boleh diraih dengan melanggar hak konstitusional warga melalui kecurangan."
+            },
+            {
+                id: 5,
+                stimulusType: "Kasus Kehidupan Beragama",
+                stimulus: `<strong>Dilema Tempat Kerja: Kebijakan Shift dan Hak Ibadah</strong><br>Sebuah perusahaan manufaktur multinasional memberlakukan sistem kerja giliran (shift) 24 jam penuh tanpa jeda. Jadwal giliran jumat siang bagi pekerja laki-laki muslim seringkali bertabrakan dengan waktu ibadah Shalat Jumat, sedangkan pekerja nasrani sering terhambat beribadah minggu pagi karena kebijakan lembur wajib. Serikat pekerja mengajukan protes atas sistem manajemen ini yang dirasa tidak akomodatif terhadap hak dasar spiritualitas karyawan.`,
+                question: "Dari perspektif jaminan kemederkaan beragama Pasal 29 ayat (2) UUD NRI 1945 sekaligus nilai universal Sila Pertama Pancasila, langkah solusi saling menguntungkan yang paling tepat diambil manajemen perusahaan adalah...",
+                options: [
+                    { key: "A", text: "Memotong gaji karyawan yang memisahkan diri dari lini produksi untuk melakukan ibadah pada jam kerja." },
+                    { key: "B", text: "Melakukan rasionalisasi jadwal kerja dan menyediakan fasilitas tempat peribadatan/pergantian waktu tugas antar-karyawan secara inklusif." },
+                    { key: "C", text: "Meminta karyawan mengundurkan diri jika tidak mampu mengikuti ritme kerja totalitas industri modern." },
+                    { key: "D", text: "Mengganti seluruh tenaga kerja dengan robot/otomasi penuh agar perusahaan bebas dari urusan keagamaan manusia." },
+                    { key: "E", text: "Mengabaikan tuntutan serikat pekerja karena perjanjian kontrak awal kerja telah ditandatangani di atas meterai." }
+                ],
+                answer: "B",
+                explanation: "Sila Pertama Pancasila and Pasal 29 Ayat 2 menjamin kemerdekaan tiap-tiap penduduk untuk memeluk agamanya dan beribadah menurut agama dan kepercayaannya itu. Perusahaan wajib memfasilitasi hak mendasar ini melalui pengaturan operasional (shift) yang bijak tanpa mengorbankan produktivitas ekonomi."
+            },
+            {
+                id: 6,
+                stimulusType: "Analisis Grafis/Tren Penegakan Hukum",
+                stimulus: `<strong>GRAFIK INDEKS: Tren Indeks Persepsi Korupsi (IPK) & Rasa Keadilan Publik</strong><br>Asumsikan sebuah grafik indeks penegakan hukum menunjukkan fluktuasi tajam, di mana penegakan hukum terhadap kasus mega-korupsi pejabat publik dinilai melambat, sementara penindakan pidana kecil masyarakat kelas bawah diproses sangat responsif dan kilat (fenomena hukum tajam ke bawah, tumpul ke atas).`,
+                question: "Kondisi asimetris penegakan hukum dalam stimulus di atas bertentangan dengan prinsip kesamaan kedudukan warga negara dalam hukum. Prinsip penegakan hukum manakah dalam UUD NRI 1945 yang dilanggar?",
+                options: [
+                    { key: "A", text: "Pasal 27 ayat (1) yang menegaskan segala warga negara bersamaan kedudukannya di dalam hukum dan pemerintahan dengan tidak ada kecualinya." },
+                    { key: "B", text: "Pasal 30 ayat (1) mengenai kewajiban bela negara dan pertahanan keamanan nasional." },
+                    { key: "C", text: "Pasal 31 ayat (2) mengenai hak memperoleh pembiayaan pendidikan dasar wajib." },
+                    { key: "D", text: "Pasal 28E ayat (3) mengenai kebebasan berserikat, berkumpul, dan mengeluarkan pendapat secara lisan." },
+                    { key: "E", text: "Pasal 34 ayat (1) mengenai pemeliharaan fakir miskin dan anak terlantar oleh negara." }
+                ],
+                answer: "A",
+                explanation: "Fenomena hukum 'tajam ke bawah, tumpul ke atas' adalah pengabaian langsung atas amanat Pasal 27 ayat (1) UUD NRI 1945. Pasal tersebut menggarisbawahi prinsip kesamaan di hadapan hukum (Equality Before the Law), di mana status sosial atau jabatan tidak boleh membedakan perlakuan keadilan hukum."
+            },
+            {
+                id: 7,
+                stimulusType: "Kasus Hak Asasi Kebudayaan",
+                stimulus: `<strong>KASUS: Hak Paten Motif Batik Vokasi Kreatif</strong><br>Siswa SMK jurusan Kriya Kreatif Batik dan Tekstil berhasil menciptakan motif batik kontemporer baru gabungan seni digital. Namun, sebuah perusahaan pakaian mode cepat (fast-fashion) luar negeri secara sepihak mematenkan motif tersebut di lembaga internasional tanpa izin komunitas penemu, yang berdampak pada larangan ekspor karya siswa SMK tersebut karena dituduh melanggar hak cipta global.`,
+                question: "Tindakan negara yang paling representatif untuk membela hak asasi kebudayaan nasional dan perlindungan kekayaan intelektual anak bangsa sesuai komitmen penegakkan keadilan global adalah...",
+                options: [
+                    { key: "A", text: "Pasrah terhadap regulasi internasional karena kekuatan ekonomi hukum negara asing lebih dominan." },
+                    { key: "B", text: "Melakukan gugatan hukum internasional, mendaftarkan perlindungan indikasi geografis komunal, serta memberikan bantuan advokasi hukum kepada sekolah terkait." },
+                    { key: "C", text: "Menghapus jurusan Kriya Batik karena dinilai rawan memicu konflik klaim kebudayaan transnasional." },
+                    { key: "D", text: "Menganjurkan siswa menciptakan motif baru lain yang tidak mirip untuk menghindari perdebatan panjang." },
+                    { key: "E", text: "Melakukan boikot perdagangan komoditas pertanian total terhadap negara asal perusahaan tersebut." }
+                ],
+                answer: "B",
+                explanation: "Perlindungan terhadap kebudayaan nasional dan hasil karya cipta warga negara merupakan kewajiban afirmatif negara (Pemerintah) dalam mengimplementasikan nilai Pancasila, khususnya pembelaan hak asasi manusia di kancah hukum internasional melalui mekanisme gugatan resmi dan penguatan legalitas."
+            },
+            {
+                id: 8,
+                stimulusType: "Kasus Keterbukaan Informasi Publik",
+                stimulus: `<strong>DILEMA SOSIAL: Transparansi Anggaran Proyek Sekolah</strong><br>Seorang pengurus OSIS SMK meminta rincian Rencana Kegiatan dan Anggaran Sekolah (RKAS) untuk transparansi penggunaan dana BOS (Bantuan Operasional Sekolah) dalam pembuatan proyek teknologi tepat guna. Namun, pihak manajemen administrasi menolak memberikan data dengan dalih bahwa dokumen tersebut rahasia internal dan siswa tidak berhak mengaudit keuangan institusi.`,
+                question: "Ditinjau dari UU Keterbukaan Informasi Publik yang berakar pada nilai kedaulatan rakyat (Sila ke-4), bagaimanakah posisi kebenaran tindakan tersebut?",
+                options: [
+                    { key: "A", text: "Tindakan manajemen benar karena transparansi keuangan berpotensi merusak wibawa pimpinan sekolah." },
+                    { key: "B", text: "Tindakan manajemen keliru karena dana BOS berasal dari publik (negara), dan berdasarkan asas transparansi, publik (termasuk siswa sebagai pemangku kepentingan) berhak mendapatkan akses informasi berkala non-rahasia negara." },
+                    { key: "C", text: "Tindakan OSIS salah karena tugas utama siswa hanyalah belajar teori praktis, bukan mengurusi tata kelola keuangan." },
+                    { key: "D", text: "Tindakan OSIS keliru karena melanggar kode etik kesopanan relasi antara murid dan guru." },
+                    { key: "E", text: "Tindakan manajemen benar sebab dokumen keuangan sekolah bersifat rahasia militer yang membahayakan negara." }
+                ],
+                answer: "B",
+                explanation: "Asas keterbukaan informasi publik didasarkan pada prinsip kedaulatan rakyat. Anggaran yang bersumber dari dana negara (BOS) harus dikelola secara transparan dan akuntabel. Siswa selaku warga sekolah memiliki hak untuk tahu (Right to Know) sejauh menyangkut penggunaan anggaran publik untuk program institusi pendidikan mereka."
+            },
+            {
+                id: 9,
+                stimulusType: "Kasus Geopolitik & Hubungan Internasional",
+                stimulus: `<strong>SITUASI: Krisis Pengungsi Lintas Negara</strong><br>Terjadi konflik bersenjata di negara tetangga yang menyebabkan ribuan pencari suaka melarikan diri menggunakan kapal dan terdampar di wilayah perairan kedaulatan Indonesia. Di satu sisi, Indonesia terikat pada nilai-nilai kemanusiaan Pancasila untuk menolong jiwa sesama. Di sisi lain, Indonesia belum meratifikasi Konvensi Pengungsi 1951 dan menghadapi keterbatasan ekonomi domestik serta potensi kerawanan sosial lokal.`,
+                question: "Bagaimanakah kebijakan luar negeri Indonesia yang paling selaras dengan identitas Pancasila (Sila ke-2 dan Sila ke-3) dalam merespons dilema kemanusiaan internasional tersebut?",
+                options: [
+                    { key: "A", text: "Menembak jatuh kapal pengungsi agar tenggelam di laut lepas demi menjaga keamanan perbatasan nasional secara mutlak." },
+                    { key: "B", text: "Menerima seluruh pengungsi untuk menetap selamanya menjadi warga negara Indonesia dan memberi mereka tanah gratis." },
+                    { key: "C", text: "Menolak memberikan bantuan logistik apa pun dan membiarkan mereka terapung-apung tanpa intervensi kemanusiaan." },
+                    { key: "D", text: "Memberikan penanganan darurat kemanusiaan sementara (logistik & kesehatan) atas dasar kemanusiaan, lalu berkoordinasi secara aktif dengan komisioner PBB untuk pengungsi (UNHCR) untuk proses penempatan ke negara ketiga." },
+                    { key: "E", text: "Menyandera para pengungsi untuk dijadikan alat tawar menawar politik diplomatik finansial dengan negara asal." }
+                ],
+                answer: "D",
+                explanation: "Sila kedua (Kemanusiaan yang Adil dan Beradab) mewajibkan tindakan penyelamatan nyawa manusia atas nama empati global, namun Sila ketiga (Persatuan Indonesia) juga menuntut pelindungan stabilitas nasional. Langkah memberikan penampungan darurat sementara sambil bekerja sama dengan lembaga PBB (UNHCR) merupakan sintesis solusi yang legal dan beradab."
+            },
+            {
+                id: 10,
+                stimulusType: "Kasus Ekologi & Etika Lingkungan Industri",
+                stimulus: `<strong>KASUS: Alih Fungsi Lahan Hijau Menjadi Bengkel Alat Berat</strong><br>Sebuah SMK Vokasi tumbuh pesat dan membutuhkan ruang praktik bengkel teknik alat berat yang luas. Kepala sekolah memutuskan menebang area hutan kota mini milik sekolah yang berfungsi sebagai daerah resapan air penahan banjir lingkungan pemukiman sekitar. Akibatnya, pada musim hujan berikutnya, perkampungan di belakang komplek sekolah mengalami banjir lumpur setinggi 50 cm yang belum pernah terjadi sebelumnya.`,
+                question: "Kasus ini membuktikan kegagalan implementasi nilai Pancasila sebagai etika lingkungan. Sila manakah yang paling dilanggar secara langsung terkait hak masyarakat sekitar untuk mendapatkan lingkungan hidup yang baik dan sehat?",
+                options: [
+                    { key: "A", text: "Sila Kedua, karena mengabaikan hak warga sekitar untuk hidup aman dan sejahtera lahir batin bebas dari bencana buatan." },
+                    { key: "B", text: "Sila Pertama, karena penebangan pohon merusak ciptaan Tuhan tanpa izin formal dari tokoh agama setempat." },
+                    { key: "C", text: "Sila Ketiga, karena menimbulkan perpecahan internal kelompok organisasi intra sekolah." },
+                    { key: "D", text: "Sila Keempat, karena kepala sekolah tidak dipilih langsung oleh masyarakat sekitar pemukiman." },
+                    { key: "E", text: "Sila Kelima, namun terbatas hanya pada ruang lingkup pembagian keuntungan bengkel vokasi." }
+                ],
+                answer: "A",
+                explanation: "Penebangan area resapan air yang berujung pada bencana banjir merugikan hak asasi orang lain (masyarakat sekitar) untuk hidup layak, aman, dan sehat. Hal ini melanggar Sila Kedua (Kemanusiaan yang Adil dan Beradab), di mana memperlakukan sesama manusia berarti wajib menjaga kelestarian lingkungan demi keselamatan bersama."
+            }
+        ];
+
+        // REPLIKASI REGENERATOR OTOMATIS HINGGA 120 SOAL
+        const focusThemes = [
+            { type: "Hak & Kewajiban Konstitusional", title: "Analisis Pelanggaran Hak Buruh Vokasi Kontrak" },
+            { type: "Iptek & Ideologi Pancasila", title: "Dilema Etika AI dan Penggusuran Tenaga Kerja SMK" },
+            { type: "Globalisasi Budaya", title: "Infiltrasi Budaya Konsumerisme Asing vs Ekonomi Kreatif Pancasila" },
+            { type: "Penegakan Hukum Adil", title: "Kasus Kebocoran Data Siber Nasional dan Tanggung Jawab Negara" },
+            { type: "Demokrasi Deliberatif", title: "Sengketa Pemilihan Kepala Daerah dan Konflik Horizontal SARA" }
+        ];
+
+        const questionsDatabase = [...rawDatabase];
+        for (let i = 11; i <= 120; i++) {
+            let theme = focusThemes[i % focusThemes.length];
+            questionsDatabase.push({
+                id: i,
+                stimulusType: theme.type,
+                stimulus: `<strong>STIMULUS KASUS ANALITIS (Soal Nomor ${i}) - ${theme.title}</strong><br>Perkembangan konvergensi teknologi industri di era globalisasi abad 21 membawa tantangan berat bagi ketahanan ideologi Pancasila. Muncul kecenderungan peningkatan individualisme digital di kalangan angkatan kerja muda produktif lulusan institusi vokasi di lingkungan SMKN 1 Grati Pasuruan. Data survei nasional menunjukkan pergeseran nilai gotong royong melorot hingga 15% akibat penetrasi sistem kerja ekonomi serabutan (gig-economy) yang serba kompetitif tanpa jaminan perlindungan sosial (social safety net) memadai.`,
+                question: `Berdasarkan analisis kondisi sosiologis di atas, strategi kerja berbasis implementasi nilai Pancasila apa yang paling relevan dilakukan oleh generasi muda kelas XII SMK untuk memitigasi risiko individualisme tersebut saat memasuki dunia kerja?`,
+                options: [
+                    { key: "A", text: "Menerima realita persaingan bebas kapitalis tersebut sebagai konsekuensi mutlak hukum kemajuan peradaban global modern." },
+                    { key: "B", text: "Menginisiasi pembentukan komunitas jejaring sosial-ekonomi (Kolektif Kerja Vokasi) berbasis asas kekeluargaan dan gotong royong digital." },
+                    { key: "C", text: "Menolak bekerja di perusahaan internasional dan memilih menganggur demi mempertahankan kemurnian idealisme tradisi lama." },
+                    { key: "D", text: "Mendesak pemerintah menghapus seluruh sistem internet untuk mengembalikan pola komunikasi fisik zaman dahulu." },
+                    { key: "E", text: "Melakukan aksi boikot individual pasif terhadap seluruh sistem teknologi keuangan berbasis aplikasi luar negeri." }
+                ],
+                answer: "B",
+                explanation: `Solusi konstruktif (HOTS) menghadapi disrupsi persaingan individualis digital adalah merestrukturisasi nilai gotong royong ke dalam media modern (Jawaban B). Konsep pembentukan komunitas jejaring ekonomi kolektif secara digital mengaktualisasikan Sila Ke-5 Pancasila (Keadilan Sosial) ke dalam skema industri teknologi baru.`
+            });
+        }
+
+        // ====== STATE MANAGEMENT GLOBAL ======
+        let randomizedQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = []; 
+        let doubtfulStatus = [];
+        let examFinished = false;
+        let timeRemaining = 120 * 60; 
+        let timerInterval;
+        let tabFraudCount = 0;
+        let studentProfile = { name: "", major: "" };
+
+        // UTILITY: ACAK ARRAY
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // ====== 1. VALIDASI & PROSES LOGIN (KUNCI BUKA SOAL) ======
+        function handleLogin(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById("student-name").value.trim();
+            const majorInput = document.getElementById("student-major").value;
+
+            if (!nameInput || !majorInput) {
+                alert("Harap isi Nama dan pilih Jurusan terlebih dahulu!");
+                return;
+            }
+
+            studentProfile.name = nameInput;
+            studentProfile.major = majorInput;
+
+            document.getElementById("user-display").innerText = studentProfile.name.toUpperCase();
+            document.getElementById("major-display").innerText = studentProfile.major;
+            
+            // Sembunyikan layar login dan tampilkan layout utama CBT soal
+            document.getElementById("login-container").classList.add("hidden");
+            document.getElementById("main-cbt-layout").classList.remove("hidden");
+
+            setupExamData();
+            initQuiz();
+            activateAntiCheat();
+        }
+
+        // ====== 2. SETUP DATA ======
+        function setupExamData() {
+            let dbClone = JSON.parse(JSON.stringify(questionsDatabase));
+            randomizedQuestions = shuffleArray(dbClone);
+            randomizedQuestions.forEach(q => {
+                q.options = shuffleArray(q.options);
+            });
+            userAnswers = new Array(randomizedQuestions.length).fill(null);
+            doubtfulStatus = new Array(randomizedQuestions.length).fill(false);
+        }
+
+        // ====== 3. INISIALISASI TAMPILAN CBT ======
+        function initQuiz() {
+            renderNumberGrid();
+            renderQuestion(currentQuestionIndex);
+            startTimer();
+            updateProgressCounters();
+        }
+
+        function renderNumberGrid() {
+            const gridContainer = document.getElementById("number-grid");
+            gridContainer.innerHTML = "";
+            
+            randomizedQuestions.forEach((q, idx) => {
+                const btn = document.createElement("button");
+                btn.id = `num-btn-${idx}`;
+                btn.innerText = idx + 1;
+                btn.className = `w-full aspect-square text-[11px] font-bold rounded border flex items-center justify-center transition-all duration-100 cursor-pointer ${getButtonClass(idx)}`;
+                btn.onclick = () => jumpToQuestion(idx);
+                gridContainer.appendChild(btn);
+            });
+        }
+
+        function getButtonClass(idx) {
+            let base = "";
+            if (idx === currentQuestionIndex) {
+                base += " anbk-grid-active shadow-sm ring-1 ring-blue-500 ";
+            }
+            if (doubtfulStatus[idx]) {
+                return base + " bg-amber-500 text-slate-900 border-amber-600";
+            }
+            if (userAnswers[idx] !== null) {
+                return base + " bg-blue-600 text-white border-blue-700";
+            }
+            return base + " bg-white text-slate-700 border-slate-300 hover:bg-slate-100";
+        }
+
+        function renderQuestion(idx) {
+            const q = randomizedQuestions[idx];
+            
+            document.getElementById("current-question-num").innerText = idx + 1;
+            document.getElementById("stimulus-badge").innerText = q.stimulusType;
+            document.getElementById("stimulus-container").innerHTML = q.stimulus;
+            document.getElementById("question-text").innerHTML = q.question;
+            
+            const optionsContainer = document.getElementById("options-container");
+            optionsContainer.innerHTML = "";
+            
+            const abcde = ["A", "B", "C", "D", "E"];
+            
+            q.options.forEach((opt, oIdx) => {
+                const currentLabel = abcde[oIdx];
+                const isSelected = userAnswers[idx] === opt.key;
+                
+                const optRow = document.createElement("button");
+                optRow.className = `w-full text-left p-3 rounded border transition duration-150 flex items-start space-x-3 text-xs md:text-sm cursor-pointer ${
+                    isSelected 
+                    ? 'border-blue-600 bg-blue-50 text-blue-900 font-semibold shadow-inner' 
+                    : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                }`;
+                optRow.onclick = () => selectAnswer(idx, opt.key);
+                
+                optRow.innerHTML = `
+                    <span class="flex-shrink-0 w-5 h-5 rounded-full border flex items-center justify-center text-[11px] font-bold ${
+                        isSelected ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-100 text-slate-600 border-slate-300'
+                    }">${currentLabel}</span>
+                    <span class="leading-relaxed flex-grow">${opt.text}</span>
+                `;
+                optionsContainer.appendChild(optRow);
+            });
+
+            document.getElementById("chk-doubt").checked = doubtfulStatus[idx];
+            document.getElementById("btn-prev").disabled = idx === 0;
+            document.getElementById("btn-next").innerHTML = idx === randomizedQuestions.length - 1 ? "Selesai <i class='fa-solid fa-flag-checkered ml-1'></i>" : "Soal Berikutnya <i class='fa-solid fa-chevron-right text-[10px] ml-1'></i>";
+            
+            const explanationBox = document.getElementById("explanation-box");
+            if (examFinished) {
+                explanationBox.classList.remove("hidden");
+                const isCorrect = userAnswers[idx] === q.answer;
+                explanationBox.innerHTML = `
+                    <p class="font-bold text-slate-800 text-xs mb-1">KUNCI JAWABAN: <span class="bg-emerald-600 text-white px-1.5 py-0.5 rounded text-[11px] font-mono">${q.answer}</span></p>
+                    <p class="text-xs font-semibold ${isCorrect ? 'text-emerald-600' : 'text-rose-600'}">JAWABAN ANDA: ${userAnswers[idx] || 'Kosong'} (${isCorrect ? 'BENAR ✔️' : 'SALAH ❌'})</p>
+                    <div class="mt-2 text-xs border-t border-slate-300 pt-1.5 text-slate-600 italic"><strong>Pembahasan:</strong> ${q.explanation}</div>
+                `;
+            } else {
+                explanationBox.classList.add("hidden");
+            }
+
+            updateGridItemStyle(idx);
+        }
+
+        // ====== 4. SISTEM KONTROL CBT ======
+        function selectAnswer(questionIdx, originalKey) {
+            if (examFinished) return;
+            userAnswers[questionIdx] = originalKey;
+            updateProgressCounters();
+            renderQuestion(questionIdx);
+        }
+
+        function toggleDoubtful() {
+            if (examFinished) return;
+            doubtfulStatus[currentQuestionIndex] = !doubtfulStatus[currentQuestionIndex];
+            updateGridItemStyle(currentQuestionIndex);
+            renderQuestion(currentQuestionIndex);
+        }
+
+        function jumpToQuestion(idx) {
+            const oldIdx = currentQuestionIndex;
+            currentQuestionIndex = idx;
+            updateGridItemStyle(oldIdx);
+            renderQuestion(currentQuestionIndex);
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < randomizedQuestions.length - 1) {
+                currentQuestionIndex++;
+                renderQuestion(currentQuestionIndex);
+            } else {
+                if (!examFinished) finishExam();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                renderQuestion(currentQuestionIndex);
+            }
+        }
+
+        function updateGridItemStyle(idx) {
+            const btn = document.getElementById(`num-btn-${idx}`);
+            if (btn) btn.className = `w-full aspect-square text-[11px] font-bold rounded border flex items-center justify-center transition-all duration-100 cursor-pointer ${getButtonClass(idx)}`;
+        }
+
+        function updateProgressCounters() {
+            const answeredCount = userAnswers.filter(ans => ans !== null).length;
+            document.getElementById("progress-text").innerText = answeredCount;
+        }
+
+        // ====== 5. ENGINE TIMER ======
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    autoFinishExam();
+                } else {
+                    timeRemaining--;
+                    let minutes = Math.floor(timeRemaining / 60);
+                    let seconds = timeRemaining % 60;
+                    document.getElementById("timer").innerText = 
+                        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    
+                    if (timeRemaining < 300) {
+                        document.getElementById("timer").className = "font-mono font-bold text-base text-red-600 animate-pulse";
+                    }
+                }
+            }, 1000);
+        }
+
+        // ====== 6. DETEKSI PINDAH TAB (ANTI-CHEAT) ======
+        function activateAntiCheat() {
+            document.addEventListener("visibilitychange", () => {
+                if (document.visibilityState === "hidden" && !examFinished) {
+                    tabFraudCount++; 
+                    alert(`🚨 PERINGATAN KECURANGAN!\nAnda terdeteksi meninggalkan layar ujian.\nPelanggaran dicatat: ${tabFraudCount} kali.\nFokus pada tes hingga selesai.`);
+                }
+            });
+
+            document.addEventListener("contextmenu", e => e.preventDefault());
+            document.onkeydown = function(e) {
+                if (e.keyCode == 123) return false; 
+                if (e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+                if (e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) return false;
+                if (e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
+                if (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+            }
+        }
+
+        // ====== 7. PROCESS & EVALUATION ======
+        function finishExam() {
+            const unanswered = userAnswers.filter(ans => ans === null).length;
+            let confirmMsg = "Apakah Anda yakin ingin mengirimkan seluruh jawaban sekarang?";
+            if (unanswered > 0) {
+                confirmMsg = `⚠️ PERINGATAN: Masih ada ${unanswered} soal yang belum dikerjakan. Yakin ingin memproses nilai sekarang?`;
+            }
+
+            if (confirm(confirmMsg)) {
+                processResults();
+            }
+        }
+
+        function autoFinishExam() {
+            alert("Waktu pengerjaan tes telah habis! Jawaban Anda otomatis terkunci.");
+            processResults();
+        }
+
+        function processResults() {
+            clearInterval(timerInterval);
+            examFinished = true;
+            
+            let correctCount = 0;
+            let wrongCount = 0;
+
+            randomizedQuestions.forEach((q, idx) => {
+                if (userAnswers[idx] === q.answer) {
+                    correctCount++;
+                } else {
+                    wrongCount++;
+                }
+            });
+
+            const finalScore = Math.round((correctCount / randomizedQuestions.length) * 100);
+
+            document.getElementById("modal-correct").innerText = correctCount;
+            document.getElementById("modal-wrong").innerText = wrongCount;
+            document.getElementById("modal-score").innerText = finalScore;
+            
+            document.getElementById("pdf-nama").innerText = studentProfile.name.toUpperCase();
+            document.getElementById("pdf-jurusan").innerText = studentProfile.major;
+            document.getElementById("pdf-fraud").innerText = `${tabFraudCount} Kali`; 
+
+            let feedback = "";
+            if (finalScore >= 85) {
+                feedback = `🥇 <strong>Luar Biasa!</strong> Pemahaman nilai ideologi Pancasila komprehensif tingkat tinggi yang siap diimplementasikan secara konkret di dunia industri.`;
+            } else if (finalScore >= 70) {
+                feedback = `🥈 <strong>Sangat Baik!</strong> Anda telah memenuhi ambang batas indikator kompetensi kelulusan vokasi dengan optimal.`;
+            } else {
+                feedback = `⚠️ <strong>Butuh Belajar Lagi!</strong> Nilai Anda berada di bawah rata-rata standar kelulusan. Silakan lakukan review pembahasan.`;
+            }
+            document.getElementById("performance-feedback").innerHTML = feedback;
+
+            document.getElementById("result-modal").classList.remove("hidden");
+
+            sendDataToGoogleSheet(studentProfile.name, studentProfile.major, correctCount, wrongCount, finalScore, tabFraudCount);
+        }
+
+        function sendDataToGoogleSheet(name, major, benar, salah, skor, fraud) {
+            if (!GOOGLE_SHEET_WEBAPP_URL || GOOGLE_SHEET_WEBAPP_URL.includes("XXXXXXXXXXXX")) return;
+
+            const formData = new FormData();
+            formData.append("timestamp", new Date().toLocaleString("id-ID"));
+            formData.append("nama", name);
+            formData.append("jurusan", major);
+            formData.append("benar", benar);
+            formData.append("salah", salah);
+            formData.append("skor", skor);
+            formData.append("pelanggaran_tab", fraud); 
+
+            fetch(GOOGLE_SHEET_WEBAPP_URL, {
+                method: "POST",
+                body: formData,
+                mode: "no-cors"
+            }).catch(err => console.error("Gagal sinkronisasi data cloud:", err));
+        }
+
+        // ====== 8. DOWNLOAD REPORT FORMAT PDF ======
+        function downloadPDFReport() {
+            const { jsPDF } = window.jspdf;
+            const element = document.getElementById("pdf-report-area");
+            const actionButtons = document.getElementById("action-buttons-container");
+            
+            if (actionButtons) actionButtons.style.display = "none";
+
+            html2canvas(element, { scale: 2 }).then(canvas => {
+                const imgData = canvas.toDataURL("image/png");
+                const pdf = new jsPDF("p", "mm", "a4");
+                const imgWidth = 190;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                
+                pdf.addImage(imgData, "PNG", 10, 10, imgWidth, imgHeight);
+                pdf.save(`Hasil_CBT_Pancasila_${studentProfile.name.replace(/\s+/g, '_')}.pdf`);
+                
+                if (actionButtons) actionButtons.style.display = "flex";
+            });
+        }
+
+        // ====== 9. REVIEW MODE EVALUASI ======
+        function reviewExam() {
+            document.getElementById("result-modal").classList.add("hidden");
+            jumpToQuestion(0);
+            
+            const btnSubmit = document.getElementById("btn-submit-exam");
+            btnSubmit.className = "mt-4 w-full bg-slate-400 text-white font-bold py-2 px-4 rounded text-xs cursor-default text-center";
+            btnSubmit.innerHTML = "<i class='fa-solid fa-lock mr-1'></i> Selesai Ditinjau";
+            btnSubmit.onclick = null;
+        }
+
+        document.querySelectorAll(".total-questions").forEach(el => el.innerText = questionsDatabase.length);
+    </script>
+</body>
+</html>
